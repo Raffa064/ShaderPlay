@@ -16,6 +16,8 @@ body {
 }
 
 .container {
+    margin: auto;
+    max-width: 900px;
     padding: 20px;
 }
 
@@ -23,13 +25,15 @@ h1 {
     margin-top: 0;
     margin-bottom: 20px;
     text-align: center;
-    animation: fadeIn 1s ease-out; /* Adicionando a animação de fade-in */
+    animation: fadeIn 1s ease-out;
+    /* Adicionando a animação de fade-in */
 }
 
 @keyframes fadeIn {
     from {
         opacity: 0;
     }
+
     to {
         opacity: 1;
     }
@@ -47,6 +51,20 @@ canvas {
     border-radius: 0 0 3px 3px;
     width: 100%;
     height: auto;
+}
+
+canvas.original {
+    animation: border-blink 2s infinite;
+}
+
+@keyframes border-blink {
+    0%, 100% {
+        border: 2px dashed #40ff60;
+    }
+    
+    50% {
+        border: 2px solid #343434;
+    }
 }
 
 input[type="file"],
@@ -94,7 +112,8 @@ button {
     width: 100%;
 }
 
-button, label {
+button,
+label {
     transition: .6s;
     user-select: none;
     -moz-user-select: none;
@@ -102,7 +121,8 @@ button, label {
     -webkit-tap-highlight-color: transparent;
 }
 
-button:hover, label:hover {
+button:hover,
+label:hover {
     filter: saturate(30%);
 }
 
@@ -128,8 +148,10 @@ textarea {
     font-weight: bold;
     border-radius: 3px 3px 0 0;
     background-color: rgba(0, 123, 255, 0.8);
-    color: #fff; /* Texto branco */
-    transition: 0.2s; /* Transição de 0.2 segundos */
+    color: #fff;
+    /* Texto branco */
+    transition: 0.2s;
+    /* Transição de 0.2 segundos */
 }
 
 /* Estilizando o link quando o atributo disabled for verdadeiro */
@@ -150,6 +172,14 @@ textarea {
     border-right: 1px solid #f00;
 }
 
-#error > span {
+#error>span {
     padding: 6px;
+    padding-inline: 10px;
+}
+
+p {
+    text-align: center;
+    color: #555;
+    font-family: monospace;
+    font-style: italic;
 }

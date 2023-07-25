@@ -14,7 +14,7 @@
         <h1>Aplicar Shader WebGL em uma Imagem</h1>
         <input type="file" id="inputImage" class="file-input" accept="image/*" onchange="applyShader()">
         <label for="inputImage" class="file-input-label" dimens="(0x0)">Selecionar Imagem</label>
-        <button id="defaultPreset" onclick="loadDefaultShader()">Default shader</button>
+        <button id="defaultPreset" onclick="loadDefaultShader()">Shader padrão</button>
         <!--button onclick="applyShader()">Aplicar Shader</button-->
         <textarea oninput="onShaderUpdate(this)" spellcheck="false" id="fragmentShaderCode" rows="10" cols="50" wrap="off">
 precision mediump float;
@@ -51,11 +51,12 @@ void main() {
         <br><br>
         <a id="downloadLink" disabled="true">Download Resultado</a>
         <div id="error"></div>
-        <canvas id="outputCanvas" onclick="setShaderEnabled(!shaderEnabled)" dkdk="setShaderEnabled(true)"></canvas>
+        <canvas id="outputCanvas" onclick="setShaderEnabled(!shaderEnabled)"></canvas>
+        <p>Toque na imagem para ver aa versão original</p>
     </div>
 
     <script>
-    const noEffectShader = `precision mediump float;
+        const noEffectShader = `precision mediump float;
 uniform sampler2D u_image;
 varying vec2 v_texCoord;
 
@@ -66,14 +67,14 @@ void main() {
 
 `;
 
-    
+
         const inputImage = document.getElementById('inputImage');
         const outputCanvas = document.getElementById('outputCanvas');
         const error = document.querySelector("#error")
         const downloadLink = document.getElementById('downloadLink');
         const label = document.querySelector(".file-input-label")
         const textarea = document.getElementById('fragmentShaderCode')
-        
+
         var fragmentShaderCode;
         var shaderEnabled = true;
         if (window.localStorage.last) textarea.value = window.localStorage.last
@@ -82,14 +83,14 @@ void main() {
             error.innerHTML = ''
             try {
                 if (inputImage.files.length <= 0) return
-                
+
                 const gl = outputCanvas.getContext('webgl');
-                
+
                 if (!gl) {
                     alert('Seu navegador não suporta WebGL.');
                     return;
                 }
-                
+
                 const vertexShaderSource = `
                                 attribute vec2 a_position;
                                 varying vec2 v_texCoord;
@@ -98,18 +99,18 @@ void main() {
                                     v_texCoord = (a_position + 1.0) / 2.0;
                                 }
                             `;
-                
+
                 fragmentShaderCode = document.getElementById('fragmentShaderCode').value;
-                
+
                 const vertexShader = createShader(gl, gl.VERTEX_SHADER, vertexShaderSource);
-                const fragmentShader = createShader(gl, gl.FRAGMENT_SHADER, shaderEnabled? fragmentShaderCode : noEffectShader);
+                const fragmentShader = createShader(gl, gl.FRAGMENT_SHADER, shaderEnabled ? fragmentShaderCode : noEffectShader);
                 const program = createProgram(gl, vertexShader, fragmentShader);
-                
+
                 gl.useProgram(program);
-                
+
                 const positionAttributeLocation = gl.getAttribLocation(program, 'a_position');
                 const positionBuffer = gl.createBuffer();
-                
+
                 gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
                 gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([
                                 -1.0, -1.0,
@@ -117,41 +118,41 @@ void main() {
                                 -1.0, 1.0,
                                 1.0, 1.0,
                             ]), gl.STATIC_DRAW);
-                
+
                 gl.enableVertexAttribArray(positionAttributeLocation);
                 gl.vertexAttribPointer(positionAttributeLocation, 2, gl.FLOAT, false, 0, 0);
-                
+
                 gl.enable(gl.BLEND);
                 gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
-                
+
                 const texture = gl.createTexture();
                 gl.bindTexture(gl.TEXTURE_2D, texture);
-                
+
                 const image = new Image();
                 image.onload = () => {
                     outputCanvas.width = image.naturalWidth;
                     outputCanvas.height = image.naturalHeight;
                     label.setAttribute('dimens', '(' + image.naturalWidth + 'x' + image.naturalHeight + ')')
-                
+
                     gl.viewport(0, 0, outputCanvas.width, outputCanvas.height);
-                
+
                     // gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, gl.RGBA, gl.UNSIGNED_BYTE, image);
                     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
                     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
                     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
                     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
                     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-                
+
                     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
-                
+
                     // Habilitar o link de download
                     downloadLink.href = outputCanvas.toDataURL();
                     downloadLink.download = 'resultado.png';
                     downloadLink.setAttribute('disabled', false);
                 };
                 image.src = URL.createObjectURL(inputImage.files[0]);
-            } catch(err) {
-                error.innerHTML = '<span>'+err+'</span>'
+            } catch (err) {
+                error.innerHTML = '<span>' + err + '</span>'
             }
         }
 
@@ -163,8 +164,8 @@ void main() {
             if (success) {
                 return shader;
             }
-            console.log(gl.getShaderInfoLog(shader));
-            gl.deleteShader(shader);
+            setTimeout(() => gl.deleteShader(shader), 180);
+            throw new Error(gl.getShaderInfoLog(shader));
         }
 
         function createProgram(gl, vertexShader, fragmentShader) {
@@ -176,17 +177,22 @@ void main() {
             if (success) {
                 return program;
             }
-            console.log(gl.getProgramInfoLog(program));
-            gl.deleteProgram(program);
+            setTimeout(() => gl.deleteProgram(program), 180);
+            throw new Error(gl.getShaderInfoLog(program));
         }
 
         function onShaderUpdate(textarea) {
             window.localStorage.last = textarea.value
             applyShader()
         }
-        
+
         function setShaderEnabled(enabled) {
             shaderEnabled = enabled
+            if (!enabled) {
+                outputCanvas.classList.add('original')
+            } else {
+                outputCanvas.classList.remove('original')
+            }
             applyShader()
         }
 
@@ -222,9 +228,9 @@ void main() {
     gl_FragColor = color;
 }
 `;
-        textarea.value = shader
-        textarea.oninput()
-    }
+            textarea.value = shader
+            textarea.oninput()
+        }
     </script>
 </body>
 
